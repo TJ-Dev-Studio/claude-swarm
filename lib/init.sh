@@ -55,14 +55,17 @@ $SWARM_DIR/swarm
 
 ## Quick Start
 
-1. **Read the shared spec** — understand the project conventions:
-   \`\`\`
-   .swarm/SPEC.md
-   \`\`\`
-
-2. **See what tasks are available**:
+1. **Check what tasks are available**:
    \`\`\`bash
    $SWARM_DIR/swarm status
+   \`\`\`
+   **If no tasks are available** (all claimed or complete), tell the user:
+   "All swarm tasks are claimed or complete. Nothing for me to do."
+   Then STOP. Do not attempt to build anything without a claimed task.
+
+2. **Read the shared spec** — understand the project conventions:
+   \`\`\`
+   .swarm/SPEC.md
    \`\`\`
 
 3. **Claim a task** (grabs next available, creates your worktree):
@@ -73,6 +76,8 @@ $SWARM_DIR/swarm
    \`\`\`bash
    $SWARM_DIR/swarm claim <N>
    \`\`\`
+   **If the claim fails** (returns "No available tasks to claim"), tell the user
+   and STOP. Do not proceed without a successfully claimed task.
 
 4. **Read your task definition** for full details:
    \`\`\`
