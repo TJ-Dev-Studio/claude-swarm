@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# swarm — orchestrate parallel Claude Code instances across a shared codebase
+#
+# Usage:
+#   swarm init                  Scaffold .swarm/ in current project
+#   swarm task add <title>      Add a new task definition (interactive)
+#   swarm task list             List all tasks and their status
+#   swarm claim [N]             Claim next available task (or specific task N)
+#   swarm status                Show overview of all tasks
+#   swarm prompt                Generate startup prompt for a fresh Claude instance
+#   swarm validate <N>          Validate task N (check file ownership, no conflicts)
+#   swarm merge <N>             Merge completed task N worktree to main branch
+#   swarm complete <N>          Mark task N as complete
+#   swarm help                  Show this help
+
+set -euo pipefail
+
+SWARM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$SWARM_DIR/lib"
+
+# Find the project root (.swarm/ directory)
+find_project_root() {
+    local dir="$PWD"
+    while [[ "$dir" != "/" ]]; do
+        if [[ -d "$dir/.swarm" ]]; then
+            echo "$dir"
+            return 0
+        fi
+        dir="$(dirname "$dir")"
+    done
+    return 1
+}
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+    init)
+        source "$LIB_DIR/init.sh"
+        swarm_init "$@"
+        ;;
+    task)
+        source "$LIB_DIR/task.sh"
+        subcmd="${1:-list}"
+        shift || true
+        case "$subcmd" in
+            add)  swarm_task_add "$@" ;;
+            list) swarm_task_list "$@" ;;
+            *)    echo "Unknown task subcommand: $subcmd"; exit 1 ;;
+        esac
+        ;;
+    claim)
+        source "$LIB_DIR/claim.sh"
+        swarm_claim "$@"
+        ;;
+    status)
+        source "$LIB_DIR/status.sh"
+        swarm_status "$@"
+        ;;
+    prompt)
+        source "$LIB_DIR/prompt.sh"
+        swarm_prompt "$@"
+        ;;
+    validate)
+        source "$LIB_DIR/validate.sh"
+        swarm_validate "$@"
+        ;;
+    merge)
+        source "$LIB_DIR/merge.sh"
+        swarm_merge "$@"
+        ;;
+    complete)
+        source "$LIB_DIR/claim.sh"
+        swarm_complete "$@"
+        ;;
+    help|--help|-h)
+        head -16 "${BASH_SOURCE[0]}" | tail -14 | sed 's/^# \?//'
+        ;;
+    *)
+        echo "Unknown command: $cmd"
+        echo "Run 'swarm help' for usage."
+        exit 1
+        ;;
+esac
