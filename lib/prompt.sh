@@ -39,12 +39,12 @@ You are a parallel build agent in a swarm orchestration. Follow these steps exac
 
 Run this command to claim the next available task:
 \`\`\`bash
-$(cd "$project_root" && pwd)/swarm claim
+$SWARM_DIR/swarm claim
 \`\`\`
 
 If you want a specific task, run:
 \`\`\`bash
-$(cd "$project_root" && pwd)/swarm claim <N>
+$SWARM_DIR/swarm claim <N>
 \`\`\`
 
 Available tasks:
@@ -81,9 +81,8 @@ Follow all conventions from SPEC.md (materials, coordinates, collision format, e
 
 When done, commit your work and run:
 \`\`\`bash
-cd $(cd "$project_root" && pwd)
-./swarm validate <N>
-./swarm complete <N>
+$SWARM_DIR/swarm validate <N>
+$SWARM_DIR/swarm complete <N>
 \`\`\`
 
 ## Rules
