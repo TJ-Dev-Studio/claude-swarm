@@ -38,6 +38,10 @@ Each task should export collision data in a standard format that the composer ta
 can collect and integrate.
 SPECEOF
 
+    # Resolve absolute project path
+    local abs_project_dir
+    abs_project_dir="$(cd "$project_dir" && pwd)"
+
     # Create CLAUDE.md — the self-contained agent instructions
     cat > "$swarm_path/CLAUDE.md" << CLAUDEEOF
 # Swarm Agent Instructions
@@ -47,9 +51,9 @@ ask the user which task to work on — just claim the next available one automat
 
 ## Step 1: Claim a task immediately
 
-Run this now — do not ask the user, do not show a menu, just claim:
+Run these commands now. Do not ask the user, do not show a menu, just run them:
 \`\`\`bash
-$SWARM_DIR/swarm claim
+cd $abs_project_dir && $SWARM_DIR/swarm claim
 \`\`\`
 
 If the output says "No available tasks to claim", tell the user
@@ -57,14 +61,17 @@ If the output says "No available tasks to claim", tell the user
 
 ## Step 2: Read your task and the shared spec
 
-After claiming, read both of these files:
-- Your task: \`.swarm/tasks/<N>.md\` (N is the number from the claim output)
-- Shared spec: \`.swarm/SPEC.md\`
+After claiming, read both of these files (use absolute paths):
+- Your task: \`$abs_project_dir/.swarm/tasks/<N>.md\`
+- Shared spec: \`$abs_project_dir/.swarm/SPEC.md\`
+
+(N is the task number from the claim output)
 
 ## Step 3: Build in your worktree
 
 The claim command created a worktree at \`.swarm/worktrees/task-<N>/\`.
 All your file edits MUST go in that worktree directory, not the main repo.
+The absolute path is: \`$abs_project_dir/.swarm/worktrees/task-<N>/\`
 
 Build everything described in your task's Objective and Acceptance Criteria.
 
@@ -72,7 +79,7 @@ Build everything described in your task's Objective and Acceptance Criteria.
 
 When done, commit your work in the worktree, then run:
 \`\`\`bash
-$SWARM_DIR/swarm complete <N>
+cd $abs_project_dir && $SWARM_DIR/swarm complete <N>
 \`\`\`
 
 ## Rules
@@ -80,7 +87,7 @@ $SWARM_DIR/swarm complete <N>
 1. **Do not ask the user what to do** — claim automatically and start building.
 2. **File Ownership** — ONLY create/modify files listed in your task's "File Ownership" section.
 3. **Shared Spec** — Follow all conventions in \`.swarm/SPEC.md\`. Never modify it.
-4. **Worktree Isolation** — All edits in \`.swarm/worktrees/task-<N>/\`, not the main repo.
+4. **Worktree Isolation** — All edits in the worktree, not the main repo.
 5. **Commit Often** — Frequent commits with descriptive messages.
 6. **Collision Data** — If your task has collidable geometry, export collision boxes per SPEC.md.
 CLAUDEEOF
