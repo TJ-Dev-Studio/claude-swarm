@@ -42,87 +42,47 @@ SPECEOF
     cat > "$swarm_path/CLAUDE.md" << CLAUDEEOF
 # Swarm Agent Instructions
 
-You are a parallel build agent. This project uses **claude-swarm** to split large
-builds across multiple Claude Code instances. Each agent claims a task, works in
-an isolated git worktree, and only modifies files it owns.
+You are a parallel build agent. Your job is to claim a task and build it. Do NOT
+ask the user which task to work on — just claim the next available one automatically.
 
-## Swarm CLI
+## Step 1: Claim a task immediately
 
-The swarm CLI is located at:
+Run this now — do not ask the user, do not show a menu, just claim:
+\`\`\`bash
+$SWARM_DIR/swarm claim
 \`\`\`
-$SWARM_DIR/swarm
+
+If the output says "No available tasks to claim", tell the user
+"All swarm tasks are claimed or complete. Nothing for me to do." and STOP.
+
+## Step 2: Read your task and the shared spec
+
+After claiming, read both of these files:
+- Your task: \`.swarm/tasks/<N>.md\` (N is the number from the claim output)
+- Shared spec: \`.swarm/SPEC.md\`
+
+## Step 3: Build in your worktree
+
+The claim command created a worktree at \`.swarm/worktrees/task-<N>/\`.
+All your file edits MUST go in that worktree directory, not the main repo.
+
+Build everything described in your task's Objective and Acceptance Criteria.
+
+## Step 4: Complete
+
+When done, commit your work in the worktree, then run:
+\`\`\`bash
+$SWARM_DIR/swarm complete <N>
 \`\`\`
-
-## Quick Start
-
-1. **Check what tasks are available**:
-   \`\`\`bash
-   $SWARM_DIR/swarm status
-   \`\`\`
-   **If no tasks are available** (all claimed or complete), tell the user:
-   "All swarm tasks are claimed or complete. Nothing for me to do."
-   Then STOP. Do not attempt to build anything without a claimed task.
-
-2. **Read the shared spec** — understand the project conventions:
-   \`\`\`
-   .swarm/SPEC.md
-   \`\`\`
-
-3. **Claim a task** (grabs next available, creates your worktree):
-   \`\`\`bash
-   $SWARM_DIR/swarm claim
-   \`\`\`
-   Or claim a specific task:
-   \`\`\`bash
-   $SWARM_DIR/swarm claim <N>
-   \`\`\`
-   **If the claim fails** (returns "No available tasks to claim"), tell the user
-   and STOP. Do not proceed without a successfully claimed task.
-
-4. **Read your task definition** for full details:
-   \`\`\`
-   .swarm/tasks/<N>.md
-   \`\`\`
-
-5. **Work in your worktree** — all edits go here:
-   \`\`\`
-   .swarm/worktrees/task-<N>/
-   \`\`\`
-
-6. **When finished**, commit your work, then:
-   \`\`\`bash
-   $SWARM_DIR/swarm complete <N>
-   \`\`\`
 
 ## Rules
 
-1. **File Ownership** — You may ONLY create/modify files listed in your task's
-   "File Ownership" section. Read anything, but write only what you own.
-2. **Shared Spec** — Follow all conventions in \`.swarm/SPEC.md\` (materials,
-   coordinates, naming, collision format). Never modify SPEC.md.
-3. **Worktree Isolation** — All your file edits MUST be within your worktree
-   directory (\`.swarm/worktrees/task-<N>/\`), not the main repo.
-4. **Commit Often** — Make frequent commits with descriptive messages.
-5. **Collision Data** — If your task produces collidable geometry, export it
-   using the format specified in SPEC.md.
-
-## How It Works
-
-- Each task has a \`.md\` file in \`.swarm/tasks/\` with: objective, file ownership,
-  acceptance criteria, and branch name.
-- \`swarm claim\` creates a lock file (\`.swarm/claimed/N.lock\`) so no other agent
-  can grab the same task, and creates an isolated git worktree on a dedicated branch.
-- When all tasks are done, the orchestrator merges branches sequentially.
-
-## Available Commands
-
-| Command | Description |
-|---------|-------------|
-| \`swarm status\` | Show all tasks and their state |
-| \`swarm claim [N]\` | Claim next (or specific) task |
-| \`swarm complete N\` | Mark task as done |
-| \`swarm validate N\` | Check file ownership compliance |
-| \`swarm task list\` | List tasks |
+1. **Do not ask the user what to do** — claim automatically and start building.
+2. **File Ownership** — ONLY create/modify files listed in your task's "File Ownership" section.
+3. **Shared Spec** — Follow all conventions in \`.swarm/SPEC.md\`. Never modify it.
+4. **Worktree Isolation** — All edits in \`.swarm/worktrees/task-<N>/\`, not the main repo.
+5. **Commit Often** — Frequent commits with descriptive messages.
+6. **Collision Data** — If your task has collidable geometry, export collision boxes per SPEC.md.
 CLAUDEEOF
 
     # Create .gitignore for swarm artifacts
