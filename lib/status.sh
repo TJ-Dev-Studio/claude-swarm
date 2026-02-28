@@ -20,11 +20,19 @@ swarm_status() {
     printf "%-6s %-12s %-30s %s\n" "TASK" "STATUS" "TITLE" "BRANCH"
     printf "%-6s %-12s %-30s %s\n" "----" "------" "-----" "------"
 
+    # Collect and sort task numbers numerically
+    local sorted_nums=()
     for f in "$tasks_dir"/*.md; do
         [[ -f "$f" ]] || continue
-        local num
-        num="$(basename "$f" .md)"
-        [[ "$num" =~ ^[0-9]+$ ]] || continue
+        local n
+        n="$(basename "$f" .md)"
+        [[ "$n" =~ ^[0-9]+$ ]] || continue
+        sorted_nums+=("$n")
+    done
+    IFS=$'\n' sorted_nums=($(printf '%s\n' "${sorted_nums[@]}" | sort -n)); unset IFS
+
+    for num in "${sorted_nums[@]}"; do
+        local f="$tasks_dir/$num.md"
 
         local title status branch
         title="$(head -1 "$f" | sed 's/^# Task [0-9]*: //')"

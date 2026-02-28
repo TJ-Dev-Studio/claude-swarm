@@ -10,14 +10,19 @@ swarm_claim() {
 
     local task_num="${1:-}"
 
-    # If no task number given, find the first available
+    # If no task number given, find the lowest-numbered available task
     if [[ -z "$task_num" ]]; then
+        local sorted_nums=()
         for f in "$tasks_dir"/*.md; do
             [[ -f "$f" ]] || continue
-            local num
-            num="$(basename "$f" .md)"
+            sorted_nums+=("$(basename "$f" .md)")
+        done
+        # Sort numerically
+        IFS=$'\n' sorted_nums=($(printf '%s\n' "${sorted_nums[@]}" | sort -n)); unset IFS
+
+        for num in "${sorted_nums[@]}"; do
             local status
-            status="$(grep -m1 '^Status:' "$f" | sed 's/^Status: //')"
+            status="$(grep -m1 '^Status:' "$tasks_dir/$num.md" | sed 's/^Status: //')"
             if [[ "$status" == "available" ]] && [[ ! -f "$claimed_dir/$num.lock" ]]; then
                 task_num="$num"
                 break

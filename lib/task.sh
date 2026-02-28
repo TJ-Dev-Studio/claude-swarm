@@ -77,10 +77,19 @@ swarm_task_list() {
     printf "%-6s %-12s %s\n" "TASK" "STATUS" "TITLE"
     printf "%-6s %-12s %s\n" "----" "------" "-----"
 
+    # Collect and sort task numbers numerically
+    local sorted_nums=()
     for f in "$tasks_dir"/*.md; do
         [[ -f "$f" ]] || continue
-        local num
-        num="$(basename "$f" .md)"
+        local n
+        n="$(basename "$f" .md)"
+        [[ "$n" =~ ^[0-9]+$ ]] || continue
+        sorted_nums+=("$n")
+    done
+    IFS=$'\n' sorted_nums=($(printf '%s\n' "${sorted_nums[@]}" | sort -n)); unset IFS
+
+    for num in "${sorted_nums[@]}"; do
+        local f="$tasks_dir/$num.md"
 
         local title status
         title="$(head -1 "$f" | sed 's/^# Task [0-9]*: //')"

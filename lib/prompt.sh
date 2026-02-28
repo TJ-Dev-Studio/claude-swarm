@@ -7,16 +7,24 @@ swarm_prompt() {
     local swarm_path="$project_root/.swarm"
     local tasks_dir="$swarm_path/tasks"
 
-    # Count available tasks
+    # Collect and sort task numbers numerically, find available ones
     local available_tasks=""
+    local sorted_nums=()
     for f in "$tasks_dir"/*.md; do
         [[ -f "$f" ]] || continue
-        local num status
-        num="$(basename "$f" .md)"
-        status="$(grep -m1 '^Status:' "$f" | sed 's/^Status: //')"
+        local n
+        n="$(basename "$f" .md)"
+        [[ "$n" =~ ^[0-9]+$ ]] || continue
+        sorted_nums+=("$n")
+    done
+    IFS=$'\n' sorted_nums=($(printf '%s\n' "${sorted_nums[@]}" | sort -n)); unset IFS
+
+    for num in "${sorted_nums[@]}"; do
+        local status
+        status="$(grep -m1 '^Status:' "$tasks_dir/$num.md" | sed 's/^Status: //')"
         if [[ "$status" == "available" ]] && [[ ! -f "$swarm_path/claimed/$num.lock" ]]; then
             local title
-            title="$(head -1 "$f" | sed 's/^# Task [0-9]*: //')"
+            title="$(head -1 "$tasks_dir/$num.md" | sed 's/^# Task [0-9]*: //')"
             available_tasks="$available_tasks  - Task $num: $title\n"
         fi
     done
